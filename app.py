@@ -450,7 +450,7 @@ with tab3:
     sns.countplot(
         data=df_info[df_info["sub_category"].isin(top_sub)],
         y="sub_category",
-        palette="Set2",  
+        palette="Set2",
         ax=ax4,
     )
     ax4.set_title("Top 15 Sub-Category phổ biến")
@@ -485,18 +485,3 @@ with tab3:
     )
     ax1.set_title("Tỷ lệ các mức đánh giá")
     st.pyplot(fig1)
-
-    # --- Top sản phẩm được đánh giá nhiều nhất ---
-    st.markdown("### 🔝 Top 10 sản phẩm được đánh giá nhiều nhất")
-    top_products = df_rating["product_id"].value_counts().head(10)
-    fig3, ax3 = plt.subplots(figsize=(10, 4))
-    sns.barplot(
-        x=top_products.index,
-        y=top_products.values,
-        ax=ax3,
-        color=sns.color_palette("viridis", as_cmap=True)[0],
-    )  # Chỉ sử dụng color, không cần palette
-    ax3.set_title("Top 10 sản phẩm có nhiều lượt đánh giá nhất")
-    ax3.set_xlabel("Product ID")
-    ax3.set_ylabel("Số lượt đánh giá")
-    st.pyplot(fig3)
