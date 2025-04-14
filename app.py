@@ -15,33 +15,21 @@ import os
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
 def load_data_rating():
-    # Tên file tải về
-    file_name = "Products_ThoiTrangNam_rating_raw.csv"
+    import os
 
-    # Nếu file chưa tồn tại, tải từ Google Drive
-    if not os.path.exists(file_name):
-        file_id = "12zMqUsiyfU24eAzOWNT1OWOYLE49pOHk"
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, file_name, quiet=False)
-
-    # Đọc dữ liệu từ file CSV đã tải về
-    return pd.read_csv(file_name, sep="\t")
+    base_path = os.path.dirname(__file__)
+    data_path = os.path.join(base_path, "data", "Products_ThoiTrangNam_rating_raw.csv")
+    return pd.read_csv(data_path, sep="\t")
 
 
 # --- Load dữ liệu & mô hình TF-IDF ---
 @st.cache_data
 def load_data_tfidf():
-    # Tên file tải về
-    file_name = "df_clean_thoitrangnam_raw.csv"
+    import os
 
-    # Nếu file chưa tồn tại, tải từ Google Drive
-    if not os.path.exists(file_name):
-        file_id = "1YAYxxKLu5yv3-h1YqmsuCrM2qxINffBJ"
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, file_name, quiet=False)
-
-    # Đọc dữ liệu từ file CSV đã tải về
-    return pd.read_csv(file_name)
+    base_path = os.path.dirname(__file__)
+    data_path = os.path.join(base_path, "data", "df_clean_thoitrangnam_raw.csv")
+    return pd.read_csv(data_path)
 
 
 # --- Page config ---
