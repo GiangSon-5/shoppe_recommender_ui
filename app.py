@@ -8,25 +8,37 @@ from surprise import BaselineOnly
 import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
+import gdown
+import os
 
 
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
 def load_data_rating():
-    import os
-
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "Products_ThoiTrangNam_rating_raw.csv")
+
+    # Nếu file chưa tồn tại, tải từ Google Drive
+    if not os.path.exists(data_path):
+        file_id = "12zMqUsiyfU24eAzOWNT1OWOYLE49pOHk"
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, data_path, quiet=False)
+
     return pd.read_csv(data_path, sep="\t")
 
 
 # --- Load dữ liệu & mô hình TF-IDF ---
 @st.cache_data
 def load_data_tfidf():
-    import os
-
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "df_clean_thoitrangnam_raw.csv")
+
+    # Nếu file chưa tồn tại, tải từ Google Drive
+    if not os.path.exists(data_path):
+        file_id = "1YAYxxKLu5yv3-h1YqmsuCrM2qxINffBJ"
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, data_path, quiet=False)
+
     return pd.read_csv(data_path)
 
 
