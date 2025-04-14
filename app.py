@@ -2,12 +2,7 @@
 import streamlit as st
 import pandas as pd
 import pickle
-from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
-from surprise import BaselineOnly
-import matplotlib.pyplot as plt
-import seaborn as sns
-from wordcloud import WordCloud
 
 
 # --- Load dữ liệu & mô hình BaselineOnly ---
