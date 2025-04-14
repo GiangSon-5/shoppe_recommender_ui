@@ -1,4 +1,4 @@
-# app.py
+import gc
 import streamlit as st
 import pandas as pd
 import pickle
@@ -6,27 +6,25 @@ from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
 from surprise import BaselineOnly
 
-
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
 def load_data_rating():
     import os
-
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "Products_ThoiTrangNam_rating_raw.csv")
-    return pd.read_csv(data_path, sep="\t")
-
+    df = pd.read_csv(data_path, sep="\t")
+    gc.collect()  # Giải phóng bộ nhớ sau khi đọc dữ liệu
+    return df
 
 # --- Load dữ liệu & mô hình TF-IDF ---
 @st.cache_data
 def load_data_tfidf():
     import os
-
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "df_clean_thoitrangnam_raw.csv")
-    return pd.read_csv(data_path)
-
-
+    df = pd.read_csv(data_path)
+    gc.collect()  # Giải phóng bộ nhớ sau khi đọc dữ liệu
+    return df
 # --- Page config ---
 st.set_page_config(page_title="Hệ thống gợi ý sản phẩm", layout="wide")
 
@@ -72,12 +70,10 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
-
-
+# --- Load mô hình TF-IDF ---
 @st.cache_resource
 def load_models_tfidf():
     import os
-
     base_path = os.path.dirname(__file__)
     with open(os.path.join(base_path, "models", "dictionary.pkl"), "rb") as f:
         dictionary = pickle.load(f)
@@ -85,19 +81,19 @@ def load_models_tfidf():
         tfidf_model = pickle.load(f)
     with open(os.path.join(base_path, "models", "index_sim.pkl"), "rb") as f:
         index_sim = pickle.load(f)
+    gc.collect()  # Giải phóng bộ nhớ sau khi tải mô hình
     return dictionary, tfidf_model, index_sim
 
-
+# --- Load mô hình Collaborative Filtering ---
 @st.cache_resource
 def load_baseline_model():
     import os
-
     base_path = os.path.dirname(__file__)
     model_path = os.path.join(base_path, "models", "baseline_model.pkl")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
+    gc.collect()  # Giải phóng bộ nhớ sau khi tải mô hình
     return model
-
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs(
@@ -113,9 +109,7 @@ with tab1:
     st.header("🔍 Gợi ý sản phẩm tương tự - TFIDF (Gensim)")
 
     # Tải dữ liệu sản phẩm và đánh giá
-    df = (
-        load_data_tfidf()
-    )  # Gồm các cột: product_id, product_name, sub_category, image, price, rating, link, description_clean
+    df = load_data_tfidf()  # Gồm các cột: product_id, product_name, sub_category, image, price, rating, link, description_clean
     reviews_df = load_data_rating()  # Gồm các cột: product_id, user_id, user, rating
 
     # Tính toán số lượng đánh giá và điểm trung bình cho mỗi sản phẩm
@@ -134,6 +128,9 @@ with tab1:
     dictionary, tfidf_model, index_sim = load_models_tfidf()
     docs = df["description_clean"].astype(str).apply(str.split)
     corpus = [dictionary.doc2bow(doc) for doc in docs]
+
+    # Giải phóng bộ nhớ sau khi tạo corpus
+    gc.collect()
 
     # Lựa chọn chế độ
     mode = st.radio(
@@ -162,6 +159,9 @@ with tab1:
             query_doc = user_input.lower().split()
             query_bow = dictionary.doc2bow(query_doc)
 
+    # Giải phóng bộ nhớ sau khi xử lý truy vấn
+    gc.collect()
+
     # Các tuỳ chọn hiển thị
     num_results = st.slider(
         "Số lượng sản phẩm gợi ý:", min_value=3, max_value=20, value=5
@@ -178,6 +178,9 @@ with tab1:
             sims = sorted(enumerate(sims), key=lambda item: -item[1])
             top_indices = [idx for idx, _ in sims[:num_results]]
             result_df = df.iloc[top_indices].copy()
+
+            # Giải phóng bộ nhớ sau khi tính toán độ tương đồng
+            gc.collect()
 
             # Sắp xếp nếu cần
             if sort_option == "Giá tăng dần":
@@ -206,16 +209,22 @@ with tab1:
                         )
                         st.markdown(f"📂 **Danh mục:** {row['sub_category']}")
                         st.markdown("---")
+
+            # Giải phóng bộ nhớ sau khi hiển thị kết quả
+            gc.collect()
         else:
             st.warning("❗ Vui lòng nhập mô tả sản phẩm hợp lệ.")
 
-
 # ===== TAB 2: Collaborative Filtering =====
+
 with tab2:
     st.header("👤 Gợi ý theo người dùng - BaselineOnly (Surprise)")
 
+    # Tải dữ liệu
     df_rating = load_data_rating()
     df_info = load_data_tfidf()
+
+    # Tải mô hình BaselineOnly
     baseline_model = load_baseline_model()
 
     st.markdown("## 👤 Tuỳ chọn người dùng")
@@ -228,19 +237,25 @@ with tab2:
         selected_user = st.text_input("Nhập user ID:")
 
     if selected_user:
+        # Lọc dữ liệu các sản phẩm chưa được người dùng đánh giá
         df_products = pd.DataFrame({"product_id": df_rating["product_id"].unique()})
-        rated_products = df_rating[df_rating["user_id"] == selected_user][
-            "product_id"
-        ].unique()
+        rated_products = df_rating[df_rating["user_id"] == selected_user]["product_id"].unique()
         df_unrated = df_products[~df_products["product_id"].isin(rated_products)].copy()
 
+        # Dự đoán điểm cho các sản phẩm chưa đánh giá
         df_unrated["EstimateScore"] = df_unrated["product_id"].apply(
             lambda x: baseline_model.predict(selected_user, x).est
         )
 
+        # Sắp xếp các sản phẩm theo điểm dự đoán
         df_recommend = df_unrated.sort_values(by="EstimateScore", ascending=False)
         df_merged = df_recommend.merge(df_info, on="product_id", how="left")
 
+        # Giải phóng bộ nhớ của các DataFrame không còn sử dụng
+        del df_unrated
+        gc.collect()
+
+        # Các tuỳ chọn hiển thị
         st.markdown("## ⚙️ Tuỳ chọn hiển thị")
         num_recommend = st.slider("Số lượng sản phẩm muốn hiển thị:", 5, 20, 10)
 
@@ -287,6 +302,7 @@ with tab2:
                 by="EstimateScore", ascending=False
             ).head(num_recommend)
 
+        # Hiển thị kết quả gợi ý
         st.subheader(
             f"📌 Top {num_recommend} sản phẩm gợi ý cho user `{selected_user}`:"
         )
@@ -359,5 +375,9 @@ with tab2:
                             f"[🔗 Xem sản phẩm trên Shopee]({row['link']})",
                             unsafe_allow_html=True,
                         )
+
+        # Giải phóng bộ nhớ sau khi hiển thị kết quả
+        del df_recommend, df_merged, df_display
+        gc.collect()
 
         st.success("✅ Gợi ý thành công!")
