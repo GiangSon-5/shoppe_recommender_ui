@@ -237,10 +237,6 @@ with tab2:
     df_rating = load_data_rating()
     df_info = load_data_tfidf()
 
-    # Giải phóng bộ nhớ sau khi tải dữ liệu
-    del df_info, df_rating
-    gc.collect()
-
     # Tải mô hình BaselineOnly
     baseline_model = load_baseline_model()
 
