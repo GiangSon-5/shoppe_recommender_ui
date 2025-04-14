@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import pickle
+from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
 
 

@@ -1,5 +1,5 @@
 streamlit
 numpy
 pandas
-
+gensim
 scipy==1.10.1
