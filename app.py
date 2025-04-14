@@ -12,7 +12,6 @@ from wordcloud import WordCloud
 
 
 # --- Load dữ liệu & mô hình BaselineOnly ---
-@st.cache_data
 def load_data_rating():
     import os
 
@@ -22,7 +21,6 @@ def load_data_rating():
 
 
 # --- Load dữ liệu & mô hình TF-IDF ---
-@st.cache_data
 def load_data_tfidf():
     import os
 
@@ -78,7 +76,6 @@ with st.sidebar:
     )
 
 
-@st.cache_resource
 def load_models_tfidf():
     import os
 
@@ -92,7 +89,6 @@ def load_models_tfidf():
     return dictionary, tfidf_model, index_sim
 
 
-@st.cache_resource
 def load_baseline_model():
     import os
 
