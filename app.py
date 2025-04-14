@@ -443,23 +443,25 @@ with tab3:
     ax2.axis("off")
     st.pyplot(fig2)
 
-    # --- Số lượng sản phẩm theo Sub-Category ---
+    # --- Số lượng sản phẩm theo Sub-Category --- (Sửa lại bằng cách dùng barplot)
     st.markdown("### 📁 Số lượng sản phẩm theo Sub-Category")
-    fig4, ax4 = plt.subplots()
-    top_sub = df_info["sub_category"].value_counts().nlargest(15).index
-    sns.countplot(
-        data=df_info[df_info["sub_category"].isin(top_sub)],
-        y="sub_category",
-        palette="Set2",  # Không cần phải sử dụng hue ở đây
+    fig4, ax4 = plt.subplots(figsize=(10, 5))
+    top_sub = df_info["sub_category"].value_counts().nlargest(15)
+    sns.barplot(
+        x=top_sub.index,
+        y=top_sub.values,
+        palette="Set2",  # Đảm bảo không có hue
         ax=ax4,
     )
     ax4.set_title("Top 15 Sub-Category phổ biến")
+    ax4.set_ylabel("Số lượng sản phẩm")
+    ax4.set_xlabel("Sub-Category")
     st.pyplot(fig4)
 
     # --- Phân phối điểm đánh giá ---
     if "rating" in df_info.columns:
         st.markdown("### ⭐ Phân phối điểm đánh giá (rating)")
-        fig6, ax6 = plt.subplots()
+        fig6, ax6 = plt.subplots(figsize=(10, 5))
         sns.histplot(
             df_info["rating"].dropna(), bins=20, kde=True, color="orange", ax=ax6
         )
@@ -486,7 +488,7 @@ with tab3:
     ax1.set_title("Tỷ lệ các mức đánh giá")
     st.pyplot(fig1)
 
-    # --- Top sản phẩm được đánh giá nhiều nhất ---
+    # --- Top sản phẩm được đánh giá nhiều nhất --- (Sửa lại bằng cách dùng barplot)
     st.markdown("### 🔝 Top 10 sản phẩm được đánh giá nhiều nhất")
     top_products = df_rating["product_id"].value_counts().head(10)
     fig3, ax3 = plt.subplots(figsize=(10, 4))
