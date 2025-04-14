@@ -10,8 +10,8 @@ import seaborn as sns
 from wordcloud import WordCloud
 
 
-
 # --- Load dữ liệu & mô hình BaselineOnly ---
+@st.cache_data
 def load_data_rating():
     import os
 
@@ -21,6 +21,7 @@ def load_data_rating():
 
 
 # --- Load dữ liệu & mô hình TF-IDF ---
+@st.cache_data
 def load_data_tfidf():
     import os
 
@@ -76,6 +77,7 @@ with st.sidebar:
     )
 
 
+@st.cache_resource
 def load_models_tfidf():
     import os
 
@@ -89,6 +91,7 @@ def load_models_tfidf():
     return dictionary, tfidf_model, index_sim
 
 
+@st.cache_resource
 def load_baseline_model():
     import os
 
@@ -361,97 +364,3 @@ with tab2:
                         )
 
         st.success("✅ Gợi ý thành công!")
-
-
-# ===== TAB 3: Data Insight =====
-with tab3:
-    st.header("📊 Trực quan dữ liệu sản phẩm")
-    st.subheader("📝 Dữ liệu đánh giá (df_clean_thoitrangnam_raw.csv)")
-    df_info = load_data_tfidf()
-    st.markdown(f"- **Số sản phẩm:** `{df_info['product_id'].nunique()}`")
-    st.markdown(f"- **Số dòng dữ liệu:** `{df_info.shape[0]}`")
-
-    with st.expander("🧾 Xem các cột và kiểu dữ liệu"):
-        st.dataframe(
-            pd.DataFrame(
-                {
-                    "Tên cột": df_info.columns,
-                    "Kiểu dữ liệu": df_info.dtypes.astype(str).values,
-                }
-            )
-        )
-
-    st.markdown("#### 🔍 Xem trước dữ liệu:")
-    st.dataframe(df_info.head(), use_container_width=True)
-
-    st.divider()
-
-    # --- Tổng quan dữ liệu đánh giá ---
-    st.subheader("📝 Dữ liệu đánh giá (Products_ThoiTrangNam_rating_raw.csv)")
-
-    df_rating = load_data_rating()
-
-    st.markdown(f"- **Số người dùng:** `{df_rating['user_id'].nunique()}`")
-    st.markdown(
-        f"- **Số sản phẩm được đánh giá:** `{df_rating['product_id'].nunique()}`"
-    )
-    st.markdown(f"- **Tổng lượt đánh giá:** `{df_rating.shape[0]}`")
-    st.markdown(f"- **Rating trung bình:** `{df_rating['rating'].mean():.2f}`")
-
-    with st.expander("🧾 Xem các cột và kiểu dữ liệu"):
-        st.dataframe(
-            pd.DataFrame(
-                {
-                    "Tên cột": df_rating.columns,
-                    "Kiểu dữ liệu": df_rating.dtypes.astype(str).values,
-                }
-            )
-        )
-
-    st.markdown("#### 🔍 Xem trước dữ liệu:")
-    st.dataframe(df_rating.head(), use_container_width=True)
-
-    st.divider()
-
-    st.subheader("📈 Trực quan các cột quan trọng")
-
-    # --- WordCloud tên sản phẩm ---
-    st.markdown("### 🧾 WordCloud tên sản phẩm (product_name)")
-    text = " ".join(df_info["product_name"].astype(str))
-    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(
-        text
-    )
-    fig2, ax2 = plt.subplots(figsize=(10, 5))
-    ax2.imshow(wordcloud, interpolation="bilinear")
-    ax2.axis("off")
-    st.pyplot(fig2)
-
-    # --- Phân phối điểm đánh giá ---
-    if "rating" in df_info.columns:
-        st.markdown("### ⭐ Phân phối điểm đánh giá (rating)")
-        fig6, ax6 = plt.subplots()
-        sns.histplot(
-            df_info["rating"].dropna(), bins=20, kde=True, color="orange", ax=ax6
-        )
-        ax6.set_title("Phân phối điểm đánh giá")
-        ax6.set_xlabel("Rating")
-        st.pyplot(fig6)
-
-    st.divider()
-    st.subheader("📝 Trực quan dữ liệu đánh giá (Products_ThoiTrangNam_rating_raw.csv)")
-
-    df_rating = load_data_rating()
-
-    # --- Pie chart: Tỷ lệ các mức đánh giá ---
-    st.markdown("### 🥧 Phân phối các mức đánh giá (Rating)")
-    rating_counts = df_rating["rating"].value_counts().sort_index()
-    fig1, ax1 = plt.subplots()
-    ax1.pie(
-        rating_counts,
-        labels=rating_counts.index,
-        autopct="%1.1f%%",
-        startangle=90,
-        colors=sns.color_palette("pastel"),
-    )
-    ax1.set_title("Tỷ lệ các mức đánh giá")
-    st.pyplot(fig1)
