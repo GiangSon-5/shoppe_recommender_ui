@@ -1,11 +1,14 @@
-import gc
+# app.py
 import streamlit as st
 import pandas as pd
 import pickle
 from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
 from surprise import BaselineOnly
-
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+import gc
 
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
@@ -413,3 +416,129 @@ with tab2:
         gc.collect()
 
         st.success("✅ Gợi ý thành công!")
+
+# ===== TAB 3: Data Insight =====
+with tab3:
+    st.header("📊 Trực quan dữ liệu sản phẩm")
+    st.subheader("📝 Dữ liệu đánh giá (df_clean_thoitrangnam_raw.csv)")
+    
+    # Tải dữ liệu
+    df_info = load_data_tfidf()
+    
+    # Hiển thị thông tin cơ bản
+    st.markdown(f"- **Số sản phẩm:** `{df_info['product_id'].nunique()}`")
+    st.markdown(f"- **Số dòng dữ liệu:** `{df_info.shape[0]}`")
+    
+    # Hiển thị các cột và kiểu dữ liệu
+    with st.expander("🧾 Xem các cột và kiểu dữ liệu"):
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Tên cột": df_info.columns,
+                    "Kiểu dữ liệu": df_info.dtypes.astype(str).values,
+                }
+            )
+        )
+
+    # Xem trước dữ liệu
+    st.markdown("#### 🔍 Xem trước dữ liệu:")
+    st.dataframe(df_info.head(), use_container_width=True)
+
+    # Giải phóng bộ nhớ của df_info sau khi sử dụng
+    del df_info
+    gc.collect()
+
+    st.divider()
+
+    # --- Tổng quan dữ liệu đánh giá ---
+    st.subheader("📝 Dữ liệu đánh giá (Products_ThoiTrangNam_rating_raw.csv)")
+
+    # Tải dữ liệu đánh giá
+    df_rating = load_data_rating()
+
+    st.markdown(f"- **Số người dùng:** `{df_rating['user_id'].nunique()}`")
+    st.markdown(
+        f"- **Số sản phẩm được đánh giá:** `{df_rating['product_id'].nunique()}`"
+    )
+    st.markdown(f"- **Tổng lượt đánh giá:** `{df_rating.shape[0]}`")
+    st.markdown(f"- **Rating trung bình:** `{df_rating['rating'].mean():.2f}`")
+
+    # Hiển thị các cột và kiểu dữ liệu của df_rating
+    with st.expander("🧾 Xem các cột và kiểu dữ liệu"):
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Tên cột": df_rating.columns,
+                    "Kiểu dữ liệu": df_rating.dtypes.astype(str).values,
+                }
+            )
+        )
+
+    st.markdown("#### 🔍 Xem trước dữ liệu:")
+    st.dataframe(df_rating.head(), use_container_width=True)
+
+    # Giải phóng bộ nhớ của df_rating sau khi sử dụng
+    del df_rating
+    gc.collect()
+
+    st.divider()
+
+    st.subheader("📈 Trực quan các cột quan trọng")
+
+    # --- WordCloud tên sản phẩm ---
+    st.markdown("### 🧾 WordCloud tên sản phẩm (product_name)")
+    
+    # Tạo wordcloud cho tên sản phẩm
+    df_info = load_data_tfidf()  # Tải lại df_info để sử dụng cho wordcloud
+    text = " ".join(df_info["product_name"].astype(str))
+    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(
+        text
+    )
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+    ax2.imshow(wordcloud, interpolation="bilinear")
+    ax2.axis("off")
+    st.pyplot(fig2)
+
+    # Giải phóng bộ nhớ sau khi sử dụng wordcloud
+    del df_info
+    gc.collect()
+
+    # --- Phân phối điểm đánh giá ---
+    df_info = load_data_tfidf()  # Tải lại df_info để sử dụng cho phân phối rating
+    if "rating" in df_info.columns:
+        st.markdown("### ⭐ Phân phối điểm đánh giá (rating)")
+        fig6, ax6 = plt.subplots()
+        sns.histplot(
+            df_info["rating"].dropna(), bins=20, kde=True, color="orange", ax=ax6
+        )
+        ax6.set_title("Phân phối điểm đánh giá")
+        ax6.set_xlabel("Rating")
+        st.pyplot(fig6)
+
+    # Giải phóng bộ nhớ sau khi hiển thị biểu đồ phân phối rating
+    del df_info
+    gc.collect()
+
+    st.divider()
+    st.subheader("📝 Trực quan dữ liệu đánh giá (Products_ThoiTrangNam_rating_raw.csv)")
+
+    # Tải lại df_rating để vẽ các biểu đồ pie chart
+    df_rating = load_data_rating()
+
+    # --- Pie chart: Tỷ lệ các mức đánh giá ---
+    st.markdown("### 🥧 Phân phối các mức đánh giá (Rating)")
+    rating_counts = df_rating["rating"].value_counts().sort_index()
+    fig1, ax1 = plt.subplots()
+    ax1.pie(
+        rating_counts,
+        labels=rating_counts.index,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=sns.color_palette("pastel"),
+    )
+    ax1.set_title("Tỷ lệ các mức đánh giá")
+    st.pyplot(fig1)
+
+    # Giải phóng bộ nhớ sau khi hiển thị biểu đồ pie chart
+    del df_rating
+    gc.collect()

@@ -1,6 +1,10 @@
 streamlit
 numpy
 pandas
-gensim
+matplotlib
+seaborn
+scikit-learn
 scipy==1.10.1
+gensim
 scikit-surprise
+wordcloud
