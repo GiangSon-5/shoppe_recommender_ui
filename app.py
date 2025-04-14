@@ -443,19 +443,6 @@ with tab3:
     ax2.axis("off")
     st.pyplot(fig2)
 
-    # --- Số lượng sản phẩm theo Sub-Category ---
-    st.markdown("### 📁 Số lượng sản phẩm theo Sub-Category")
-    fig4, ax4 = plt.subplots()
-    top_sub = df_info["sub_category"].value_counts().nlargest(15).index
-    sns.countplot(
-        data=df_info[df_info["sub_category"].isin(top_sub)],
-        y="sub_category",
-        palette="Set2",
-        ax=ax4,
-    )
-    ax4.set_title("Top 15 Sub-Category phổ biến")
-    st.pyplot(fig4)
-
     # --- Phân phối điểm đánh giá ---
     if "rating" in df_info.columns:
         st.markdown("### ⭐ Phân phối điểm đánh giá (rating)")
