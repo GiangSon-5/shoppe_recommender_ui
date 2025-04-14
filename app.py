@@ -6,25 +6,31 @@ from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
 from surprise import BaselineOnly
 
+
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
 def load_data_rating():
     import os
+
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "Products_ThoiTrangNam_rating_raw.csv")
     df = pd.read_csv(data_path, sep="\t")
     gc.collect()  # Giải phóng bộ nhớ sau khi đọc dữ liệu
     return df
 
+
 # --- Load dữ liệu & mô hình TF-IDF ---
 @st.cache_data
 def load_data_tfidf():
     import os
+
     base_path = os.path.dirname(__file__)
     data_path = os.path.join(base_path, "data", "df_clean_thoitrangnam_raw.csv")
     df = pd.read_csv(data_path)
     gc.collect()  # Giải phóng bộ nhớ sau khi đọc dữ liệu
     return df
+
+
 # --- Page config ---
 st.set_page_config(page_title="Hệ thống gợi ý sản phẩm", layout="wide")
 
@@ -70,10 +76,13 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
+
+
 # --- Load mô hình TF-IDF ---
 @st.cache_resource
 def load_models_tfidf():
     import os
+
     base_path = os.path.dirname(__file__)
     with open(os.path.join(base_path, "models", "dictionary.pkl"), "rb") as f:
         dictionary = pickle.load(f)
@@ -84,16 +93,19 @@ def load_models_tfidf():
     gc.collect()  # Giải phóng bộ nhớ sau khi tải mô hình
     return dictionary, tfidf_model, index_sim
 
+
 # --- Load mô hình Collaborative Filtering ---
 @st.cache_resource
 def load_baseline_model():
     import os
+
     base_path = os.path.dirname(__file__)
     model_path = os.path.join(base_path, "models", "baseline_model.pkl")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
     gc.collect()  # Giải phóng bộ nhớ sau khi tải mô hình
     return model
+
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs(
@@ -109,7 +121,9 @@ with tab1:
     st.header("🔍 Gợi ý sản phẩm tương tự - TFIDF (Gensim)")
 
     # Tải dữ liệu sản phẩm và đánh giá
-    df = load_data_tfidf()  # Gồm các cột: product_id, product_name, sub_category, image, price, rating, link, description_clean
+    df = (
+        load_data_tfidf()
+    )  # Gồm các cột: product_id, product_name, sub_category, image, price, rating, link, description_clean
     reviews_df = load_data_rating()  # Gồm các cột: product_id, user_id, user, rating
 
     # Tính toán số lượng đánh giá và điểm trung bình cho mỗi sản phẩm
@@ -216,13 +230,16 @@ with tab1:
             st.warning("❗ Vui lòng nhập mô tả sản phẩm hợp lệ.")
 
 # ===== TAB 2: Collaborative Filtering =====
-
 with tab2:
     st.header("👤 Gợi ý theo người dùng - BaselineOnly (Surprise)")
 
     # Tải dữ liệu
     df_rating = load_data_rating()
     df_info = load_data_tfidf()
+
+    # Giải phóng bộ nhớ sau khi tải dữ liệu
+    del df_info, df_rating
+    gc.collect()
 
     # Tải mô hình BaselineOnly
     baseline_model = load_baseline_model()
@@ -239,20 +256,35 @@ with tab2:
     if selected_user:
         # Lọc dữ liệu các sản phẩm chưa được người dùng đánh giá
         df_products = pd.DataFrame({"product_id": df_rating["product_id"].unique()})
-        rated_products = df_rating[df_rating["user_id"] == selected_user]["product_id"].unique()
+        rated_products = df_rating[df_rating["user_id"] == selected_user][
+            "product_id"
+        ].unique()
         df_unrated = df_products[~df_products["product_id"].isin(rated_products)].copy()
+
+        # Giải phóng bộ nhớ sau khi tạo df_unrated
+        del df_products
+        gc.collect()
 
         # Dự đoán điểm cho các sản phẩm chưa đánh giá
         df_unrated["EstimateScore"] = df_unrated["product_id"].apply(
             lambda x: baseline_model.predict(selected_user, x).est
         )
 
+        # Giải phóng bộ nhớ sau khi tính toán dự đoán
+        del rated_products
+        gc.collect()
+
         # Sắp xếp các sản phẩm theo điểm dự đoán
         df_recommend = df_unrated.sort_values(by="EstimateScore", ascending=False)
+
+        # Giải phóng bộ nhớ sau khi sắp xếp
+        del df_unrated
+        gc.collect()
+
         df_merged = df_recommend.merge(df_info, on="product_id", how="left")
 
-        # Giải phóng bộ nhớ của các DataFrame không còn sử dụng
-        del df_unrated
+        # Giải phóng bộ nhớ sau khi merge
+        del df_recommend
         gc.collect()
 
         # Các tuỳ chọn hiển thị
@@ -301,6 +333,10 @@ with tab2:
             df_display = df_merged.sort_values(
                 by="EstimateScore", ascending=False
             ).head(num_recommend)
+
+        # Giải phóng bộ nhớ sau khi tính toán df_display
+        del df_merged
+        gc.collect()
 
         # Hiển thị kết quả gợi ý
         st.subheader(
@@ -377,7 +413,7 @@ with tab2:
                         )
 
         # Giải phóng bộ nhớ sau khi hiển thị kết quả
-        del df_recommend, df_merged, df_display
+        del df_display
         gc.collect()
 
         st.success("✅ Gợi ý thành công!")
