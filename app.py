@@ -11,12 +11,13 @@ from wordcloud import WordCloud
 import gdown
 import os
 
+
 # --- Load dữ liệu & mô hình BaselineOnly ---
 @st.cache_data
 def load_data_rating():
     # Tên file tải về
     file_name = "Products_ThoiTrangNam_rating_raw.csv"
-    
+
     # Nếu file chưa tồn tại, tải từ Google Drive
     if not os.path.exists(file_name):
         file_id = "12zMqUsiyfU24eAzOWNT1OWOYLE49pOHk"
@@ -27,13 +28,12 @@ def load_data_rating():
     return pd.read_csv(file_name, sep="\t")
 
 
-
 # --- Load dữ liệu & mô hình TF-IDF ---
 @st.cache_data
 def load_data_tfidf():
     # Tên file tải về
     file_name = "df_clean_thoitrangnam_raw.csv"
-    
+
     # Nếu file chưa tồn tại, tải từ Google Drive
     if not os.path.exists(file_name):
         file_id = "1YAYxxKLu5yv3-h1YqmsuCrM2qxINffBJ"
@@ -450,7 +450,7 @@ with tab3:
     sns.countplot(
         data=df_info[df_info["sub_category"].isin(top_sub)],
         y="sub_category",
-        palette="Set2",
+        palette="Set2",  # Không cần phải sử dụng hue ở đây
         ax=ax4,
     )
     ax4.set_title("Top 15 Sub-Category phổ biến")
