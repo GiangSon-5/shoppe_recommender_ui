@@ -4,6 +4,7 @@ import pandas as pd
 import pickle
 from gensim import corpora, models, similarities
 from recommend_utils import find_similar_sparse
+from surprise import BaselineOnly
 
 
 # --- Load dữ liệu & mô hình BaselineOnly ---
